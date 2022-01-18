@@ -1,41 +1,64 @@
-import {useCallback, useRef, useState, VFC} from "react";
+import { useEffect, useRef, useState, VFC } from "react";
 
 export enum TaxIdType {
     SSN,
     EIN
 }
 
-const formatSsn = (inputString: string) => {
-    let formatted = inputString.replace(/[^\d]/g, '');
-    formatted = formatted.substring(0, 9);
-    formatted = formatted.replace(/^(\d{3})(\d+)/, '$1-$2');
-    return formatted.replace(/^(\d{3}-\d{2})(\d+)/, '$1-$2');
+const cleanInput = (inputString: string, characterRegex = /\d/) => {
+    const regex = new RegExp(`[^${characterRegex.source}]`, "g");
+    return inputString.replace(regex, '').substring(0, 9);
 }
 
-const formatEin = (inputString: string) => {
-    let formatted = inputString.replace(/[^\d]/g, '');
-    formatted = formatted.substring(0, 9);
-    return formatted.replace(/^(\d{2})(\d+)/, '$1-$2');
+const formatSsn = (inputString: string, characterRegex = /\d/) => {
+    const { source } = characterRegex;
+
+    let formatted = cleanInput(inputString, characterRegex);
+    formatted = formatted.replace(new RegExp(`^([${source}]{3})([${source}]+)$`), '$1-$2');
+    return formatted.replace(new RegExp(`^([${source}]{3}-[${source}]{2})([${source}]+)$`), '$1-$2');
+}
+
+const formatEin = (inputString: string, characterRegex = /\d/) => {
+    const { source } = characterRegex;
+
+    let formatted = cleanInput(inputString, characterRegex);
+    return formatted.replace(new RegExp(`^([${source}]{2})([${source}]+)`), '$1-$2');
 }
 
 export interface TaxIdInputProps {
-    maskCharacter?: string;
+    onChange: (taxId: string) => void;
     taxIdType: TaxIdType;
     taxId: string | undefined;
 }
 
-// https://codepen.io/ashblue/pen/LGeqxx
+/**
+ * The logic for this component was primarily adapted from this JQuery version of a SSN input
+ * https://codepen.io/ashblue/pen/LGeqxx
+ *
+ * @param onChange
+ * @param taxIdType
+ * @param taxId
+ * @constructor
+ */
 
-export const TaxIdInput: VFC<TaxIdInputProps> = ({ maskCharacter, taxIdType }) => {
-    const [taxIdDigits, setTaxIdDigits] = useState("");
+export const TaxIdInput: VFC<TaxIdInputProps> = ({ onChange, taxIdType, taxId }) => {
+    const [taxIdDigits, setTaxIdDigits] = useState(cleanInput(taxId ?? ""));
     const inputRef = useRef<HTMLInputElement | null>(null);
 
-    const getFormattedTaxId = (input: string): string => {
+    useEffect(() => {
+        setTaxIdDigits(cleanInput(taxId ?? ""));
+    }, [taxId]);
+
+    useEffect(() => {
+        onChange(getFormattedTaxId(taxIdDigits));
+    }, [taxIdDigits]);
+
+    const getFormattedTaxId = (input: string, characterRegex = /\d/): string => {
         switch (taxIdType) {
             case TaxIdType.SSN:
-                return formatSsn(input);
+                return formatSsn(input, characterRegex);
             case TaxIdType.EIN:
-                return formatEin(input);
+                return formatEin(input, characterRegex);
         }
     }
 
@@ -45,9 +68,7 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({ maskCharacter, taxIdType }) =
             return;
         }
 
-        let cleanedInput = input.value.replace(/[^\d]/g, '');
-        cleanedInput = cleanedInput.substring(0, 9);
-
+        let cleanedInput = cleanInput(input.value, /\d|\*/);
         let currentTaxIdDigits = taxIdDigits;
 
         for (let i = 0; i < cleanedInput.length; i++) {
@@ -55,20 +76,18 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({ maskCharacter, taxIdType }) =
                 currentTaxIdDigits = currentTaxIdDigits.substring(0, i) + cleanedInput[i] + currentTaxIdDigits.substring(i + 1);
             }
         }
+        // Removes any deleted characters
         currentTaxIdDigits = currentTaxIdDigits.substring(0, cleanedInput.length);
-
         setTaxIdDigits(currentTaxIdDigits);
 
         const formattedTaxId = getFormattedTaxId(currentTaxIdDigits);
-
         input.setSelectionRange(formattedTaxId.length, formattedTaxId.length);
     }
 
     return (
-        <>
         <input
             type="text"
-            value={getFormattedTaxId(taxIdDigits)}
+            value={getFormattedTaxId(taxIdDigits.replace(/\d(?=\d)/g, '*'), /\d|\*/)}
             ref={inputRef}
             onInput={syncInput}
             onChange={syncInput}
@@ -78,7 +97,5 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({ maskCharacter, taxIdType }) =
             onFocus={syncInput}
             onBlur={syncInput}
         />
-            <div>{getFormattedTaxId(taxIdDigits)}</div>
-            </>
     );
 }

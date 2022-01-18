@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import {TaxIdInput, TaxIdType} from "./TaxIdInput";
 
 export default {
@@ -7,9 +7,21 @@ export default {
 }
 
 export const SocialSecurityNumber = () => {
-    return <TaxIdInput taxIdType={TaxIdType.SSN} taxId={undefined} />;
+    const [taxId, setTaxId] = useState("");
+    return (
+        <>
+            <TaxIdInput taxIdType={TaxIdType.SSN} taxId={taxId} onChange={setTaxId} />
+            <div>{taxId}</div>
+        </>
+    );
 }
 
 export const EmployerIdentificationNumber = () => {
-    return <TaxIdInput taxIdType={TaxIdType.EIN} taxId={undefined} />;
+    const [taxId, setTaxId] = useState("");
+    return (
+        <>
+            <TaxIdInput taxIdType={TaxIdType.EIN} taxId={taxId} onChange={setTaxId} />
+            <div>{taxId}</div>
+        </>
+    );
 }
