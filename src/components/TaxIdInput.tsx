@@ -39,24 +39,34 @@ const isHiddenCharacterValid = (hiddenCharacter: string | undefined) => {
 }
 
 export interface TaxIdInputProps {
+    /**
+     * The character used to hide characters that have already been inputted.
+     */
     hiddenCharacter?: string;
+    /**
+     * Change handler function that is invoked when the taxId is modified.
+     */
     onChange: (taxId: string) => void;
+    /**
+     * When true, shows all characters of the taxId.
+     */
+    show?: boolean;
+    /**
+     * The type of taxId (SSN or EIN).
+     */
     taxIdType: TaxIdType;
+    /**
+     * The taxId used as the initial value.
+     */
     taxId: string | undefined;
 }
 
 /**
  * The logic for this component was primarily adapted from this JQuery version of a SSN input
  * https://codepen.io/ashblue/pen/LGeqxx
- *
- * @param hiddenCharacter
- * @param onChange
- * @param taxIdType
- * @param taxId
- * @constructor
  */
 
-export const TaxIdInput: VFC<TaxIdInputProps> = ({ hiddenCharacter, onChange, taxIdType, taxId }) => {
+export const TaxIdInput: VFC<TaxIdInputProps> = ({ hiddenCharacter, onChange, show, taxIdType, taxId }) => {
     const [taxIdDigits, setTaxIdDigits] = useState(cleanInput(taxId ?? ""));
     const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -86,12 +96,12 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({ hiddenCharacter, onChange, ta
     }, [hiddenCharacter]);
 
     const displayValue = useMemo(() => {
-        if (!isHiddenCharacterValid(hiddenCharacter) || !hiddenCharacter) {
+        if (!isHiddenCharacterValid(hiddenCharacter) || !hiddenCharacter || show) {
             return getFormattedTaxId(taxIdDigits);
         }
 
         return getFormattedTaxId(taxIdDigits.replace(/\d(?=\d)/g, hiddenCharacter));
-    }, [hiddenCharacter, taxIdDigits]);
+    }, [hiddenCharacter, show, taxIdDigits]);
 
     if (!isHiddenCharacterValid(hiddenCharacter)) {
         throw new Error('Value of prop "hiddenCharacter" must be 1 character or less');
