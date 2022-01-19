@@ -1,15 +1,16 @@
-import React, {cloneElement, isValidElement, FC, useEffect, useMemo, useRef, useState } from "react";
 import _escapeRegExp from 'lodash/escapeRegExp';
+import React, { isValidElement, useCallback, useEffect, useMemo, useRef, useState, VFC } from 'react';
+import { ReactElement } from 'react';
 
 export enum TaxIdType {
     SSN,
-    EIN
+    EIN,
 }
 
 const cleanInput = (inputString: string, characterRegex = /\d/) => {
-    const regex = new RegExp(`[^${characterRegex.source}]`, "g");
+    const regex = new RegExp(`[^${characterRegex.source}]`, 'g');
     return inputString.replace(regex, '').substring(0, 9);
-}
+};
 
 const formatSsn = (inputString: string, characterRegex = /\d/) => {
     const { source } = characterRegex;
@@ -17,14 +18,14 @@ const formatSsn = (inputString: string, characterRegex = /\d/) => {
     let formatted = cleanInput(inputString, characterRegex);
     formatted = formatted.replace(new RegExp(`^([${source}]{3})([${source}]+)$`), '$1-$2');
     return formatted.replace(new RegExp(`^([${source}]{3}-[${source}]{2})([${source}]+)$`), '$1-$2');
-}
+};
 
 const formatEin = (inputString: string, characterRegex = /\d/) => {
     const { source } = characterRegex;
 
-    let formatted = cleanInput(inputString, characterRegex);
+    const formatted = cleanInput(inputString, characterRegex);
     return formatted.replace(new RegExp(`^([${source}]{2})([${source}]+)`), '$1-$2');
-}
+};
 
 const isHiddenCharacterValid = (hiddenCharacter: string | undefined) => {
     if (hiddenCharacter && hiddenCharacter.length > 1) {
@@ -35,10 +36,14 @@ const isHiddenCharacterValid = (hiddenCharacter: string | undefined) => {
         return true;
     }
 
-    return !Boolean(/\d|-/.exec(hiddenCharacter));
-}
+    return !/\d|-/.exec(hiddenCharacter);
+};
 
 export interface TaxIdInputProps {
+    /**
+     *
+     */
+    customInput?: React.ComponentType<{ inputRef: React.MutableRefObject<HTMLInputElement | null>; value: string }>;
     /**
      * The character used to hide characters that have already been inputted.
      */
@@ -66,26 +71,20 @@ export interface TaxIdInputProps {
  * https://codepen.io/ashblue/pen/LGeqxx
  */
 
-export const TaxIdInput: FC<TaxIdInputProps> = ({ children, hiddenCharacter, onChange, show, taxIdType, value }) => {
-    const [taxIdDigits, setTaxIdDigits] = useState(cleanInput(value ?? ""));
+export const TaxIdInput: VFC<TaxIdInputProps> = ({
+    customInput,
+    hiddenCharacter,
+    onChange,
+    show,
+    taxIdType,
+    value,
+}) => {
+    const [taxIdDigits, setTaxIdDigits] = useState(cleanInput(value ?? ''));
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
-        setTaxIdDigits(cleanInput(value ?? ""));
+        setTaxIdDigits(cleanInput(value ?? ''));
     }, [value]);
-
-    const getFormattedTaxId = (input: string): string => {
-        switch (taxIdType) {
-            case TaxIdType.SSN:
-                return formatSsn(input, characterRegex);
-            case TaxIdType.EIN:
-                return formatEin(input, characterRegex);
-        }
-    }
-
-    useEffect(() => {
-        onChange(getFormattedTaxId(taxIdDigits));
-    }, [taxIdDigits]);
 
     const characterRegex = useMemo(() => {
         if (!isHiddenCharacterValid(hiddenCharacter)) {
@@ -95,35 +94,50 @@ export const TaxIdInput: FC<TaxIdInputProps> = ({ children, hiddenCharacter, onC
         return new RegExp(`\\d|${_escapeRegExp(hiddenCharacter)}`);
     }, [hiddenCharacter]);
 
+    const getFormattedTaxId = useCallback(
+        (input: string): string => {
+            switch (taxIdType) {
+                case TaxIdType.SSN:
+                    return formatSsn(input, characterRegex);
+                case TaxIdType.EIN:
+                    return formatEin(input, characterRegex);
+            }
+        },
+        [characterRegex, taxIdType]
+    );
+
+    useEffect(() => {
+        onChange(getFormattedTaxId(taxIdDigits));
+    }, [getFormattedTaxId, onChange, taxIdDigits]);
+
     const displayValue = useMemo(() => {
         if (!isHiddenCharacterValid(hiddenCharacter) || !hiddenCharacter || show) {
             return getFormattedTaxId(taxIdDigits);
         }
 
         return getFormattedTaxId(taxIdDigits.replace(/\d(?=\d)/g, hiddenCharacter));
-    }, [hiddenCharacter, show, taxIdDigits]);
+    }, [getFormattedTaxId, hiddenCharacter, show, taxIdDigits]);
 
     if (!isHiddenCharacterValid(hiddenCharacter)) {
         throw new Error('Value of prop "hiddenCharacter" must be 1 character or less');
     }
 
-    if (children) {
-        React.Children.only(children);
-    }
-
-    const syncInput = () => {
+    const syncInput = useCallback(() => {
         const input = inputRef.current;
         if (!input) {
-            return;
+            throw new Error(
+                'inputRef is not attached to an element, the customInput component must take inputRef as a prop and attach it to the input element'
+            );
         }
 
-        let cleanedInput = cleanInput(input.value, characterRegex);
+        const cleanedInput = cleanInput(input.value, characterRegex);
         let currentTaxIdDigits = taxIdDigits;
 
         // Adds any new characters to our state if there are any new ones
         for (let i = 0; i < cleanedInput.length; i++) {
             if (/[0-9]/.exec(cleanedInput[i])) {
-                currentTaxIdDigits = currentTaxIdDigits.substring(0, i) + cleanedInput[i] + currentTaxIdDigits.substring(i + 1);
+                currentTaxIdDigits =
+                    currentTaxIdDigits.substring(0, i) + cleanedInput[i] + currentTaxIdDigits.substring(i + 1);
             }
         }
         // Removes any deleted characters
@@ -132,36 +146,27 @@ export const TaxIdInput: FC<TaxIdInputProps> = ({ children, hiddenCharacter, onC
 
         const formattedTaxId = getFormattedTaxId(currentTaxIdDigits);
         input.setSelectionRange(formattedTaxId.length, formattedTaxId.length);
-    }
+    }, [characterRegex, getFormattedTaxId, taxIdDigits]);
 
-    return (
-        isValidElement(children) ?
-            cloneElement(children, {
-                inputRef,
-                value: displayValue,
-                onInput: syncInput,
-                onChange: syncInput,
-                onClick: syncInput,
-                onKeyUp: syncInput,
-                onKeyDown: syncInput,
-                onFocus: syncInput,
-                onBlur: syncInput
-            }) :
-        <input
-            type="text"
-            value={displayValue}
-            ref={inputRef}
-            onInput={syncInput}
-            onChange={syncInput}
-            onClick={syncInput}
-            onKeyUp={syncInput}
-            onKeyDown={syncInput}
-            onFocus={syncInput}
-            onBlur={syncInput}
-        />
+    const CustomInput = customInput;
+
+    const inputProps = useMemo(
+        () => ({
+            value: displayValue,
+            onInput: syncInput,
+            onChange: syncInput,
+            onClick: syncInput,
+            onKeyUp: syncInput,
+            onKeyDown: syncInput,
+            onFocus: syncInput,
+            onBlur: syncInput,
+        }),
+        [displayValue, syncInput]
     );
-}
 
-function useCallback(arg0: () => void, arg1: never[]) {
-    throw new Error("Function not implemented.");
-}
+    return CustomInput ? (
+        <CustomInput inputRef={inputRef} {...inputProps} />
+    ) : (
+        <input type="text" ref={inputRef} {...inputProps} />
+    );
+};
