@@ -1,6 +1,5 @@
 import _escapeRegExp from 'lodash/escapeRegExp';
-import React, { isValidElement, useCallback, useEffect, useMemo, useRef, useState, VFC } from 'react';
-import { ReactElement } from 'react';
+import React, { VFC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export enum TaxIdType {
     SSN,
@@ -110,6 +109,15 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
         onChange(getFormattedTaxId(taxIdDigits));
     }, [getFormattedTaxId, onChange, taxIdDigits]);
 
+    useEffect(() => {
+        const input = inputRef.current;
+        if (!input) {
+            throw new Error(
+                'inputRef is not attached to an element, the customInput component must take inputRef as a prop and attach it to the input element'
+            );
+        }
+    }, []);
+
     const displayValue = useMemo(() => {
         if (!isHiddenCharacterValid(hiddenCharacter) || !hiddenCharacter || show) {
             return getFormattedTaxId(taxIdDigits);
@@ -118,16 +126,10 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
         return getFormattedTaxId(taxIdDigits.replace(/\d(?=\d)/g, hiddenCharacter));
     }, [getFormattedTaxId, hiddenCharacter, show, taxIdDigits]);
 
-    if (!isHiddenCharacterValid(hiddenCharacter)) {
-        throw new Error('Value of prop "hiddenCharacter" must be 1 character or less');
-    }
-
     const syncInput = useCallback(() => {
         const input = inputRef.current;
         if (!input) {
-            throw new Error(
-                'inputRef is not attached to an element, the customInput component must take inputRef as a prop and attach it to the input element'
-            );
+            return;
         }
 
         const cleanedInput = cleanInput(input.value, characterRegex);
@@ -147,6 +149,10 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
         const formattedTaxId = getFormattedTaxId(currentTaxIdDigits);
         input.setSelectionRange(formattedTaxId.length, formattedTaxId.length);
     }, [characterRegex, getFormattedTaxId, taxIdDigits]);
+
+    if (!isHiddenCharacterValid(hiddenCharacter)) {
+        throw new Error('Value of prop "hiddenCharacter" must be 1 character or less');
+    }
 
     const CustomInput = customInput;
 

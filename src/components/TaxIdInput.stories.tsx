@@ -6,6 +6,9 @@ export default {
     title: 'TaxIdInput',
     component: TaxIdInput,
     argTypes: {
+        customInput: {
+            control: false,
+        },
         taxId: {
             control: false,
         },
@@ -15,10 +18,20 @@ export default {
         taxIdType: {
             control: false,
         },
+        value: {
+            control: false,
+        },
     },
 };
 
-export const SocialSecurityNumber = ({ hiddenCharacter, show }: { hiddenCharacter: string; show: boolean }) => {
+export const SocialSecurityNumber = ({
+    hiddenCharacter,
+    show,
+}: {
+    hiddenCharacter: string;
+    show: boolean;
+    value: string;
+}) => {
     const [taxId, setTaxId] = useState('');
     return (
         <>
@@ -63,8 +76,8 @@ export const CustomInput = ({ hiddenCharacter, show }: { hiddenCharacter: string
         <>
             <TaxIdInput
                 customInput={TextField}
-                taxIdType={TaxIdType.EIN}
                 value={taxId}
+                taxIdType={TaxIdType.SSN}
                 onChange={setTaxId}
                 hiddenCharacter={hiddenCharacter}
                 show={show}

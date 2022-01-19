@@ -14,7 +14,8 @@
         "prettier",
         "react",
         "react-hooks",
-        "@typescript-eslint"
+        "@typescript-eslint",
+        "unused-imports"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
@@ -30,9 +31,10 @@
         "prettier/prettier": "error",
         "react/display-name": "off",
         "react/no-children-prop": "off",
-        "react/react-in-jsx-scope": "warn",
+        "react/react-in-jsx-scope": "error",
         "react-hooks/rules-of-hooks": "error",
-        "react-hooks/exhaustive-deps": "warn"
+        "react-hooks/exhaustive-deps": "warn",
+        "unused-imports/no-unused-imports": "error"
     },
     "ignorePatterns": [
         "node_modules"
