@@ -1,5 +1,6 @@
 import _escapeRegExp from 'lodash/escapeRegExp';
-import React, { VFC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { VFC, useCallback, useEffect, useMemo, useRef, useState, ChangeEvent, FormEvent } from 'react';
+import { useIsMounted } from '../utils/useIsMounted';
 
 export enum TaxIdType {
     SSN,
@@ -40,13 +41,19 @@ const isHiddenCharacterValid = (hiddenCharacter: string | undefined) => {
 
 export interface TaxIdInputProps {
     /**
-     *
+     * Custom input component can be used in lieu of the default HTML <input> element. Component must take an inputRef prop that attaches to the underlying HTML
+     * input element used as well as a value property for the current value displayed in the input element.
      */
     customInput?: React.ComponentType<{ inputRef: React.MutableRefObject<HTMLInputElement | null>; value: string }>;
     /**
      * The character used to hide characters that have already been inputted.
      */
     hiddenCharacter?: string;
+    /**
+     * The delay before hiding the last inputted character, if you always want the last character to show you can put "Infinity".
+     * If no value is provided, the default value of 500ms is used.
+     */
+    hideLastCharacterDelay?: number;
     /**
      * Change handler function that is invoked when the taxId is modified.
      */
@@ -73,6 +80,7 @@ export interface TaxIdInputProps {
 export const TaxIdInput: VFC<TaxIdInputProps> = ({
     customInput,
     hiddenCharacter,
+    hideLastCharacterDelay = 500,
     onChange,
     show,
     taxIdType,
@@ -80,6 +88,10 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
 }) => {
     const [taxIdDigits, setTaxIdDigits] = useState(cleanInput(value ?? ''));
     const inputRef = useRef<HTMLInputElement | null>(null);
+    const isMountedRef = useIsMounted();
+
+    const [hideLastCharacter, setHideLastCharacter] = useState(hideLastCharacterDelay === 0);
+    const hideLastCharacterTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
     useEffect(() => {
         setTaxIdDigits(cleanInput(value ?? ''));
@@ -123,32 +135,53 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
             return getFormattedTaxId(taxIdDigits);
         }
 
-        return getFormattedTaxId(taxIdDigits.replace(/\d(?=\d)/g, hiddenCharacter));
-    }, [getFormattedTaxId, hiddenCharacter, show, taxIdDigits]);
+        const regex = hideLastCharacter ? /\d/g : /\d(?=\d)/g;
 
-    const syncInput = useCallback(() => {
-        const input = inputRef.current;
-        if (!input) {
-            return;
-        }
+        return getFormattedTaxId(taxIdDigits.replace(regex, hiddenCharacter));
+    }, [getFormattedTaxId, hiddenCharacter, hideLastCharacter, show, taxIdDigits]);
 
-        const cleanedInput = cleanInput(input.value, characterRegex);
-        let currentTaxIdDigits = taxIdDigits;
-
-        // Adds any new characters to our state if there are any new ones
-        for (let i = 0; i < cleanedInput.length; i++) {
-            if (/[0-9]/.exec(cleanedInput[i])) {
-                currentTaxIdDigits =
-                    currentTaxIdDigits.substring(0, i) + cleanedInput[i] + currentTaxIdDigits.substring(i + 1);
+    const syncInput = useCallback(
+        (event: Event | ChangeEvent<HTMLInputElement> | FormEvent<HTMLInputElement> | KeyboardEvent) => {
+            const input = inputRef.current;
+            if (!input) {
+                return;
             }
-        }
-        // Removes any deleted characters
-        currentTaxIdDigits = currentTaxIdDigits.substring(0, cleanedInput.length);
-        setTaxIdDigits(currentTaxIdDigits);
 
-        const formattedTaxId = getFormattedTaxId(currentTaxIdDigits);
-        input.setSelectionRange(formattedTaxId.length, formattedTaxId.length);
-    }, [characterRegex, getFormattedTaxId, taxIdDigits]);
+            const cleanedInput = cleanInput(input.value, characterRegex);
+            let currentTaxIdDigits = taxIdDigits;
+
+            if (hideLastCharacterDelay !== 0 && hideLastCharacterDelay !== Infinity) {
+                if (cleanedInput.length > currentTaxIdDigits.length) {
+                    setHideLastCharacter(false);
+                    if (hideLastCharacterTimeoutRef.current) {
+                        clearTimeout(hideLastCharacterTimeoutRef.current);
+                    }
+                    hideLastCharacterTimeoutRef.current = setTimeout(() => {
+                        if (isMountedRef.current) {
+                            setHideLastCharacter(true);
+                        }
+                    }, hideLastCharacterDelay);
+                } else if ('key' in event && (event.key === 'Backspace' || event.key === 'Delete')) {
+                    setHideLastCharacter(true);
+                }
+            }
+
+            // Adds any new characters to our state if there are any new ones
+            for (let i = 0; i < cleanedInput.length; i++) {
+                if (/[0-9]/.exec(cleanedInput[i])) {
+                    currentTaxIdDigits =
+                        currentTaxIdDigits.substring(0, i) + cleanedInput[i] + currentTaxIdDigits.substring(i + 1);
+                }
+            }
+            // Removes any deleted characters
+            currentTaxIdDigits = currentTaxIdDigits.substring(0, cleanedInput.length);
+            setTaxIdDigits(currentTaxIdDigits);
+
+            const formattedTaxId = getFormattedTaxId(currentTaxIdDigits);
+            input.setSelectionRange(formattedTaxId.length, formattedTaxId.length);
+        },
+        [characterRegex, getFormattedTaxId, hideLastCharacterDelay, isMountedRef, taxIdDigits]
+    );
 
     if (!isHiddenCharacterValid(hiddenCharacter)) {
         throw new Error('Value of prop "hiddenCharacter" must be 1 character or less');

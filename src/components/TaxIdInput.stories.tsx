@@ -26,11 +26,12 @@ export default {
 
 export const SocialSecurityNumber = ({
     hiddenCharacter,
+    hideLastCharacterDelay,
     show,
 }: {
     hiddenCharacter: string;
+    hideLastCharacterDelay: number;
     show: boolean;
-    value: string;
 }) => {
     const [taxId, setTaxId] = useState('');
     return (
@@ -40,6 +41,7 @@ export const SocialSecurityNumber = ({
                 value={taxId}
                 onChange={setTaxId}
                 hiddenCharacter={hiddenCharacter}
+                hideLastCharacterDelay={hideLastCharacterDelay}
                 show={show}
             />
             <div>{taxId}</div>
@@ -48,10 +50,19 @@ export const SocialSecurityNumber = ({
 };
 SocialSecurityNumber.args = {
     hiddenCharacter: '*',
+    hideLastCharacterDelay: 1000,
     show: false,
 };
 
-export const EmployerIdentificationNumber = ({ hiddenCharacter, show }: { hiddenCharacter: string; show: boolean }) => {
+export const EmployerIdentificationNumber = ({
+    hiddenCharacter,
+    hideLastCharacterDelay,
+    show,
+}: {
+    hiddenCharacter: string;
+    hideLastCharacterDelay: number;
+    show: boolean;
+}) => {
     const [taxId, setTaxId] = useState('');
     return (
         <>
@@ -60,6 +71,7 @@ export const EmployerIdentificationNumber = ({ hiddenCharacter, show }: { hidden
                 value={taxId}
                 onChange={setTaxId}
                 hiddenCharacter={hiddenCharacter}
+                hideLastCharacterDelay={hideLastCharacterDelay}
                 show={show}
             />
             <div>{taxId}</div>
@@ -70,7 +82,15 @@ EmployerIdentificationNumber.args = {
     ...SocialSecurityNumber.args,
 };
 
-export const CustomInput = ({ hiddenCharacter, show }: { hiddenCharacter: string; show: boolean }) => {
+export const CustomInput = ({
+    hiddenCharacter,
+    hideLastCharacterDelay,
+    show,
+}: {
+    hiddenCharacter: string;
+    hideLastCharacterDelay: number;
+    show: boolean;
+}) => {
     const [taxId, setTaxId] = useState('');
     return (
         <>
@@ -80,6 +100,7 @@ export const CustomInput = ({ hiddenCharacter, show }: { hiddenCharacter: string
                 taxIdType={TaxIdType.SSN}
                 onChange={setTaxId}
                 hiddenCharacter={hiddenCharacter}
+                hideLastCharacterDelay={hideLastCharacterDelay}
                 show={show}
             />
             <div>{taxId}</div>
