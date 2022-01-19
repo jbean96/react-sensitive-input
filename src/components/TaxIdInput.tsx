@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, VFC } from "react";
+import React, {cloneElement, isValidElement, FC, useEffect, useMemo, useRef, useState } from "react";
 import _escapeRegExp from 'lodash/escapeRegExp';
 
 export enum TaxIdType {
@@ -58,7 +58,7 @@ export interface TaxIdInputProps {
     /**
      * The taxId used as the initial value.
      */
-    taxId: string | undefined;
+    value: string | undefined;
 }
 
 /**
@@ -66,13 +66,13 @@ export interface TaxIdInputProps {
  * https://codepen.io/ashblue/pen/LGeqxx
  */
 
-export const TaxIdInput: VFC<TaxIdInputProps> = ({ hiddenCharacter, onChange, show, taxIdType, taxId }) => {
-    const [taxIdDigits, setTaxIdDigits] = useState(cleanInput(taxId ?? ""));
+export const TaxIdInput: FC<TaxIdInputProps> = ({ children, hiddenCharacter, onChange, show, taxIdType, value }) => {
+    const [taxIdDigits, setTaxIdDigits] = useState(cleanInput(value ?? ""));
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     useEffect(() => {
-        setTaxIdDigits(cleanInput(taxId ?? ""));
-    }, [taxId]);
+        setTaxIdDigits(cleanInput(value ?? ""));
+    }, [value]);
 
     const getFormattedTaxId = (input: string): string => {
         switch (taxIdType) {
@@ -107,6 +107,10 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({ hiddenCharacter, onChange, sh
         throw new Error('Value of prop "hiddenCharacter" must be 1 character or less');
     }
 
+    if (children) {
+        React.Children.only(children);
+    }
+
     const syncInput = () => {
         const input = inputRef.current;
         if (!input) {
@@ -131,6 +135,18 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({ hiddenCharacter, onChange, sh
     }
 
     return (
+        isValidElement(children) ?
+            cloneElement(children, {
+                inputRef,
+                value: displayValue,
+                onInput: syncInput,
+                onChange: syncInput,
+                onClick: syncInput,
+                onKeyUp: syncInput,
+                onKeyDown: syncInput,
+                onFocus: syncInput,
+                onBlur: syncInput
+            }) :
         <input
             type="text"
             value={displayValue}
@@ -144,4 +160,8 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({ hiddenCharacter, onChange, sh
             onBlur={syncInput}
         />
     );
+}
+
+function useCallback(arg0: () => void, arg1: never[]) {
+    throw new Error("Function not implemented.");
 }

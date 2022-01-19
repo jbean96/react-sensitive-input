@@ -1,3 +1,4 @@
+import TextField from "@mui/material/TextField";
 import React, {useState} from "react";
 import {TaxIdInput, TaxIdType} from "./TaxIdInput";
 
@@ -41,5 +42,20 @@ export const EmployerIdentificationNumber = ({ hiddenCharacter, show }: { hidden
     );
 }
 EmployerIdentificationNumber.args = {
+    ...SocialSecurityNumber.args
+}
+
+export const CustomInput = ({ hiddenCharacter, show }: { hiddenCharacter: string, show: boolean }) => {
+    const [taxId, setTaxId] = useState("");
+    return (
+        <>
+            <TaxIdInput taxIdType={TaxIdType.EIN} taxId={taxId} onChange={setTaxId} hiddenCharacter={hiddenCharacter} show={show}>
+                <TextField />
+            </TaxIdInput>
+            <div>{taxId}</div>
+        </>
+    );
+}
+CustomInput.args = {
     ...SocialSecurityNumber.args
 }
