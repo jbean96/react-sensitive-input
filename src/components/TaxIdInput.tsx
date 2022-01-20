@@ -1,32 +1,17 @@
 import _escapeRegExp from 'lodash/escapeRegExp';
-import React, { VFC, useCallback, useEffect, useMemo, useRef, useState, ChangeEvent, FormEvent } from 'react';
-import { useIsMounted } from '../utils/useIsMounted';
-
-export enum TaxIdType {
-	SSN,
-	EIN,
-}
-
-// Cleans an input string of anything that doesn't match the provided regex. If no regex is provided the default matches all numbers.
-const cleanInput = (inputString: string, characterRegex = /\d/) => {
-	const regex = new RegExp(`[^${characterRegex.source}]`, 'g');
-	return inputString.replace(regex, '').substring(0, 9);
-};
-
-const formatSsn = (inputString: string, characterRegex = /\d/) => {
-	const { source } = characterRegex;
-
-	let formatted = cleanInput(inputString, characterRegex);
-	formatted = formatted.replace(new RegExp(`^([${source}]{3})([${source}]+)$`), '$1-$2');
-	return formatted.replace(new RegExp(`^([${source}]{3}-[${source}]{2})([${source}]+)$`), '$1-$2');
-};
-
-const formatEin = (inputString: string, characterRegex = /\d/) => {
-	const { source } = characterRegex;
-
-	const formatted = cleanInput(inputString, characterRegex);
-	return formatted.replace(new RegExp(`^([${source}]{2})([${source}]+)`), '$1-$2');
-};
+import React, {
+	VFC,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+	ChangeEvent,
+	FormEvent,
+} from 'react';
+import { TaxIdType } from 'types';
+import { cleanInput, formatEin, formatSsn } from 'utils';
+import { useIsMounted } from 'utils/hooks';
 
 // Determines if a provided hidden character is valid. A hidden charcter is valid if it is:
 //  1. A single character.
@@ -46,40 +31,35 @@ const isHiddenCharacterValid = (hiddenCharacter: string | undefined) => {
 
 export interface TaxIdInputProps {
 	/**
-	 * Custom input component can be used in lieu of the default HTML <input> element. Component must take an inputRef prop that attaches to the underlying HTML
-	 * input element used as well as a value property for the current value displayed in the input element.
+	 * Custom input component can be used in lieu of the default HTML <input> element. Component
+	 * must take an inputRef prop that attaches to the underlying HTML input element used as well as
+	 * a value property for the current value displayed in the input element.
 	 */
-	customInput?: React.ComponentType<{ inputRef: React.MutableRefObject<HTMLInputElement | null>; value: string }>;
-	/**
-	 * The character used to hide characters that have already been inputted.
-	 */
+	customInput?: React.ComponentType<{
+		inputRef: React.MutableRefObject<HTMLInputElement | null>;
+		value: string;
+	}>;
+	/** The character used to hide characters that have already been inputted. */
 	hiddenCharacter?: string;
 	/**
-	 * The delay before hiding the last inputted character, if you always want the last character to show you can put "Infinity".
-	 * If no value is provided, the default value of 500ms is used.
+	 * The delay before hiding the last inputted character, if you always want the last character to
+	 * show you can put "Infinity". If no value is provided, the default value of 500ms is used.
 	 */
 	hideLastCharacterDelay?: number;
-	/**
-	 * Change handler function that is invoked when the taxId is modified.
-	 */
+	/** Change handler function that is invoked when the taxId is modified. */
 	onChange: (taxId: string) => void;
-	/**
-	 * When true, shows all characters of the taxId.
-	 */
+	/** When true, shows all characters of the taxId. */
 	show?: boolean;
 	/**
-	 * Prevents the last digits from being hidden with the provided hiddenCharacter. A value of N means that the last N digits will always be showing
-	 * and will never be hidden by the hiddenCharacter. Leaving this undefined is the same as passing a 0 which means that no digits receive special
-	 * treatment with regards to being hidden/shown.
+	 * Prevents the last digits from being hidden with the provided hiddenCharacter. A value of N
+	 * means that the last N digits will always be showing and will never be hidden by the
+	 * hiddenCharacter. Leaving this undefined is the same as passing a 0 which means that no digits
+	 * receive special treatment with regards to being hidden/shown.
 	 */
 	showLastDigits?: number;
-	/**
-	 * The type of taxId (SSN or EIN).
-	 */
+	/** The type of taxId (SSN or EIN). */
 	taxIdType: TaxIdType;
-	/**
-	 * The taxId used as the initial value.
-	 */
+	/** The taxId used as the initial value. */
 	value: string | undefined;
 }
 
@@ -140,7 +120,8 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
 		const input = inputRef.current;
 		if (!input) {
 			throw new Error(
-				'inputRef is not attached to an element, the customInput component must take inputRef as a prop and attach it to the input element'
+				`inputRef is not attached to an element, the customInput component must take 
+                inputRef as a prop and attach it to the input element`
 			);
 		}
 	}, []);
@@ -150,21 +131,32 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
 			return getFormattedTaxId(taxIdDigits);
 		}
 
-		// Computing the lookahead number is effectively determining how many digits from the end do we want to be showing. In the case that the user
-		// hasn't typed (9 - showLastDigits) numbers, we will either show 0 or 1 numbers depending on the state of hideLastCharacter. Otherwise if the
-		// user has typed at least (9 - showLastDigits) numbers, then we will show a number of digits equivalent to the difference between that value and
-		// the current # of digits the user has already inputted.
-		const lookaheadNumber = Math.max(hideLastCharacter ? 0 : 1, taxIdDigits.length - (9 - (showLastDigits ?? 0)));
+		// Computing the lookahead number is effectively determining how many digits from the end
+		// do we want to be showing. In the case that the user hasn't typed (9 - showLastDigits)
+		// numbers, we will either show 0 or 1 numbers depending on the state of
+		// hideLastCharacter. Otherwise if the user has typed at least (9 - showLastDigits)
+		// numbers, then we will show a number of digits equivalent to the difference between that
+		// value and the current # of digits the user has already inputted.
+		const lookaheadNumber = Math.max(
+			hideLastCharacter ? 0 : 1,
+			taxIdDigits.length - (9 - (showLastDigits ?? 0))
+		);
 
 		const regex = new RegExp(`\\d(?=\\d{${lookaheadNumber}})`, 'g');
 
 		return getFormattedTaxId(taxIdDigits.replace(regex, hiddenCharacter));
 	}, [getFormattedTaxId, hiddenCharacter, hideLastCharacter, show, showLastDigits, taxIdDigits]);
 
-	// On any event, we invoke this function to sync the internal state that we are recording for what the user has typed, as well as the current
-	// caret position in the input box.
+	// On any event, we invoke this function to sync the internal state that we are recording for
+	// what the user has typed, as well as the current caret position in the input box.
 	const syncInput = useCallback(
-		(event: Event | ChangeEvent<HTMLInputElement> | FormEvent<HTMLInputElement> | KeyboardEvent) => {
+		(
+			event:
+				| Event
+				| ChangeEvent<HTMLInputElement>
+				| FormEvent<HTMLInputElement>
+				| KeyboardEvent
+		) => {
 			const input = inputRef.current;
 			if (!input) {
 				return;
@@ -184,7 +176,10 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
 							setHideLastCharacter(true);
 						}
 					}, hideLastCharacterDelay);
-				} else if ('key' in event && (event.key === 'Backspace' || event.key === 'Delete')) {
+				} else if (
+					'key' in event &&
+					(event.key === 'Backspace' || event.key === 'Delete')
+				) {
 					setHideLastCharacter(true);
 				}
 			}
@@ -193,7 +188,9 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
 			for (let i = 0; i < cleanedInput.length; i++) {
 				if (/[0-9]/.exec(cleanedInput[i])) {
 					currentTaxIdDigits =
-						currentTaxIdDigits.substring(0, i) + cleanedInput[i] + currentTaxIdDigits.substring(i + 1);
+						currentTaxIdDigits.substring(0, i) +
+						cleanedInput[i] +
+						currentTaxIdDigits.substring(i + 1);
 				}
 			}
 			// Removes any deleted characters

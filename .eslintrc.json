@@ -1,42 +1,32 @@
 {
-    "env": {
-        "browser": true,
-        "es2021": true,
-        "jest": true,
-        "node": true
-    },
-    "extends": [
-        "eslint:recommended",
-        "plugin:prettier/recommended",
-        "plugin:@typescript-eslint/recommended"
-    ],
-    "plugins": [
-        "prettier",
-        "react",
-        "react-hooks",
-        "@typescript-eslint",
-        "unused-imports"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-        "ecmaFeatures": {
-            "jsx": true
-        },
-        "ecmaVersion": "latest",
-        "sourceType": "module"
-    },
-    "rules": {
-        "eqeqeq": "error",
-        "no-console": "warn",
-        "prettier/prettier": "error",
-        "react/display-name": "off",
-        "react/no-children-prop": "off",
-        "react/react-in-jsx-scope": "error",
-        "react-hooks/rules-of-hooks": "error",
-        "react-hooks/exhaustive-deps": "warn",
-        "unused-imports/no-unused-imports": "error"
-    },
-    "ignorePatterns": [
-        "node_modules"
-    ]
+	"env": {
+		"browser": true,
+		"es2021": true,
+		"jest": true,
+		"node": true
+	},
+	"parser": "@typescript-eslint/parser",
+	"parserOptions": {
+		"ecmaFeatures": {
+			"jsx": true
+		},
+		"ecmaVersion": "latest",
+		"sourceType": "module"
+	},
+	"extends": [
+		"plugin:react/recommended",
+		"plugin:@typescript-eslint/recommended",
+		"plugin:react-hooks/recommended",
+		"prettier"
+	],
+	"plugins": ["react", "react-hooks", "unused-imports", "@typescript-eslint", "prettier"],
+	"rules": {
+		"eqeqeq": "error",
+		"prettier/prettier": "error",
+		"arrow-body-style": "off",
+		"prefer-arrow-callback": "off",
+		"max-len": ["error", { "code": 100, "ignoreComments": false }],
+		"react/prop-types": "off"
+	},
+	"ignorePatterns": ["node_modules"]
 }
