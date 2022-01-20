@@ -211,6 +211,7 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
 
 	const inputProps = useMemo(
 		() => ({
+			'data-testid': 'tii-1',
 			value: displayValue,
 			onInput: syncInput,
 			onChange: syncInput,
