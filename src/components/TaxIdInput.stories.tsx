@@ -1,7 +1,7 @@
 import TextField from '@mui/material/TextField';
 import React, { useState } from 'react';
 import { TaxIdType } from 'types';
-import { TaxIdInput } from './TaxIdInput';
+import { TaxIdInput } from 'components/TaxIdInput';
 
 export default {
 	title: 'TaxIdInput',
