@@ -1,6 +1,5 @@
 import _escapeRegExp from 'lodash/escapeRegExp';
 import React, {
-	VFC,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -31,16 +30,38 @@ const isHiddenCharacterValid = (hiddenCharacter: string | undefined) => {
 
 export const TAX_ID_INPUT_TEST_ID = 'tii-1';
 
-export interface TaxIdInputProps {
+type SyncInputEvent =
+	| Event
+	| ChangeEvent<HTMLInputElement>
+	| FormEvent<HTMLInputElement>
+	| KeyboardEvent;
+
+type SyncInputEventFn = (event: SyncInputEvent) => void;
+
+export interface CustomInputPropsType {
+	'data-testid': string;
+	inputRef: React.MutableRefObject<HTMLInputElement | null>;
+	onInput: SyncInputEventFn;
+	onChange: SyncInputEventFn;
+	onClick: SyncInputEventFn;
+	onKeyUp: SyncInputEventFn;
+	onKeyDown: SyncInputEventFn;
+	onFocus: SyncInputEventFn;
+	onBlur: SyncInputEventFn;
+	value: string | undefined;
+}
+
+export interface TaxIdInputProps<T = unknown> {
 	/**
 	 * Custom input component can be used in lieu of the default HTML <input> element. Component
 	 * must take an inputRef prop that attaches to the underlying HTML input element used as well as
 	 * a value property for the current value displayed in the input element.
 	 */
-	customInput?: React.ComponentType<{
-		inputRef: React.MutableRefObject<HTMLInputElement | null>;
-		value: string;
-	}>;
+	customInput?: React.ComponentType<T & CustomInputPropsType>;
+	/**
+	 * Props that will be passed to the customInput component.
+	 */
+	customInputProps?: T;
 	/** The character used to hide characters that have already been inputted. */
 	hiddenCharacter?: string;
 	/**
@@ -70,8 +91,9 @@ export interface TaxIdInputProps {
  * https://codepen.io/ashblue/pen/LGeqxx
  */
 
-export const TaxIdInput: VFC<TaxIdInputProps> = ({
+export function TaxIdInput<T>({
 	customInput,
+	customInputProps,
 	hiddenCharacter,
 	hideLastCharacterDelay = 500,
 	onChange,
@@ -79,7 +101,7 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
 	showLastDigits,
 	taxIdType,
 	value,
-}) => {
+}: TaxIdInputProps<T>) {
 	const [taxIdDigits, setTaxIdDigits] = useState(cleanInput(value ?? ''));
 	const inputRef = useRef<HTMLInputElement | null>(null);
 	const isMountedRef = useIsMounted();
@@ -214,7 +236,7 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
 
 	const CustomInput = customInput;
 
-	const inputProps = useMemo(
+	const inputProps: Omit<CustomInputPropsType, 'inputRef'> = useMemo(
 		() => ({
 			'data-testid': TAX_ID_INPUT_TEST_ID,
 			value: displayValue,
@@ -230,8 +252,8 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
 	);
 
 	return CustomInput ? (
-		<CustomInput inputRef={inputRef} {...inputProps} />
+		<CustomInput inputRef={inputRef} {...inputProps} {...customInputProps} />
 	) : (
 		<input type="text" ref={inputRef} {...inputProps} />
 	);
-};
+}

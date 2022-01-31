@@ -1,7 +1,7 @@
 import TextField from '@mui/material/TextField';
-import React, { useState } from 'react';
+import React, { MutableRefObject, useState, VFC } from 'react';
 import { TaxIdType } from 'types';
-import { TaxIdInput } from 'components/TaxIdInput';
+import { CustomInputPropsType, TaxIdInput } from 'components/TaxIdInput';
 
 export default {
 	title: 'TaxIdInput',
@@ -105,8 +105,8 @@ export const CustomInput = ({
 	return (
 		<>
 			<TaxIdInput
-				customInput={TextField}
 				value={taxId}
+				customInput={TextField}
 				taxIdType={TaxIdType.SSN}
 				onChange={setTaxId}
 				hiddenCharacter={hiddenCharacter}
