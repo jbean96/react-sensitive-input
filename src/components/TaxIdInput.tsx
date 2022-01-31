@@ -29,6 +29,8 @@ const isHiddenCharacterValid = (hiddenCharacter: string | undefined) => {
 	return !/\d|-/.exec(hiddenCharacter);
 };
 
+export const TAX_ID_INPUT_TEST_ID = 'tii-1';
+
 export interface TaxIdInputProps {
 	/**
 	 * Custom input component can be used in lieu of the default HTML <input> element. Component
@@ -204,14 +206,17 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
 	);
 
 	if (!isHiddenCharacterValid(hiddenCharacter)) {
-		throw new Error('Value of prop "hiddenCharacter" must be 1 character or less');
+		throw new Error(
+			`Value of prop "hiddenCharacter" must be 1 character or less and cannot be a number 
+            or "-"`
+		);
 	}
 
 	const CustomInput = customInput;
 
 	const inputProps = useMemo(
 		() => ({
-			'data-testid': 'tii-1',
+			'data-testid': TAX_ID_INPUT_TEST_ID,
 			value: displayValue,
 			onInput: syncInput,
 			onChange: syncInput,

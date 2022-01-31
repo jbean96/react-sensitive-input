@@ -26,7 +26,8 @@
 		"arrow-body-style": "off",
 		"prefer-arrow-callback": "off",
 		"max-len": ["error", { "code": 100, "ignoreComments": false }],
-		"react/prop-types": "off"
+		"react/prop-types": "off",
+		"@typescript-eslint/no-empty-function": "off"
 	},
 	"ignorePatterns": ["node_modules"]
 }
