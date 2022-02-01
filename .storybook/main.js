@@ -4,7 +4,7 @@ module.exports = {
 	core: {
 		builder: 'webpack5',
 	},
-	stories: ['../src/**/*.stories.tsx'],
+	stories: ['../src/**/*.stories.mdx'],
 	addons: ['@storybook/addon-essentials', '@storybook/preset-create-react-app'],
 	// webpackFinal: async (config) => {
 	// 	config.resolve.modules = [

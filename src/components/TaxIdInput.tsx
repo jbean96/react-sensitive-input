@@ -7,6 +7,8 @@ import React, {
 	useState,
 	ChangeEvent,
 	FormEvent,
+	VFC,
+	MutableRefObject,
 } from 'react';
 import { TaxIdType } from 'types';
 import { cleanInput, formatEin, formatSsn } from 'utils';
@@ -36,32 +38,16 @@ type SyncInputEvent =
 	| FormEvent<HTMLInputElement>
 	| KeyboardEvent;
 
-type SyncInputEventFn = (event: SyncInputEvent) => void;
-
-export interface CustomInputPropsType {
-	'data-testid': string;
-	inputRef: React.MutableRefObject<HTMLInputElement | null>;
-	onInput: SyncInputEventFn;
-	onChange: SyncInputEventFn;
-	onClick: SyncInputEventFn;
-	onKeyUp: SyncInputEventFn;
-	onKeyDown: SyncInputEventFn;
-	onFocus: SyncInputEventFn;
-	onBlur: SyncInputEventFn;
-	value: string | undefined;
-}
-
-export interface TaxIdInputProps<T = unknown> {
+export interface TaxIdInputProps {
 	/**
 	 * Custom input component can be used in lieu of the default HTML <input> element. Component
 	 * must take an inputRef prop that attaches to the underlying HTML input element used as well as
 	 * a value property for the current value displayed in the input element.
 	 */
-	customInput?: React.ComponentType<T & CustomInputPropsType>;
-	/**
-	 * Props that will be passed to the customInput component.
-	 */
-	customInputProps?: T;
+	customInput?: React.ComponentType<{
+		inputRef: MutableRefObject<HTMLInputElement | null>;
+		value: string;
+	}>;
 	/** The character used to hide characters that have already been inputted. */
 	hiddenCharacter?: string;
 	/**
@@ -70,7 +56,7 @@ export interface TaxIdInputProps<T = unknown> {
 	 */
 	hideLastCharacterDelay?: number;
 	/** Change handler function that is invoked when the taxId is modified. */
-	onChange: (taxId: string) => void;
+	onChange?: (taxId: string) => void;
 	/** When true, shows all characters of the taxId. */
 	show?: boolean;
 	/**
@@ -83,7 +69,7 @@ export interface TaxIdInputProps<T = unknown> {
 	/** The type of taxId (SSN or EIN). */
 	taxIdType: TaxIdType;
 	/** The taxId used as the initial value. */
-	value: string | undefined;
+	value?: string;
 }
 
 /**
@@ -91,9 +77,8 @@ export interface TaxIdInputProps<T = unknown> {
  * https://codepen.io/ashblue/pen/LGeqxx
  */
 
-export function TaxIdInput<T>({
+export const TaxIdInput: VFC<TaxIdInputProps> = ({
 	customInput,
-	customInputProps,
 	hiddenCharacter,
 	hideLastCharacterDelay = 500,
 	onChange,
@@ -101,7 +86,7 @@ export function TaxIdInput<T>({
 	showLastDigits,
 	taxIdType,
 	value,
-}: TaxIdInputProps<T>) {
+}) => {
 	const [taxIdDigits, setTaxIdDigits] = useState(cleanInput(value ?? ''));
 	const inputRef = useRef<HTMLInputElement | null>(null);
 	const isMountedRef = useIsMounted();
@@ -136,7 +121,7 @@ export function TaxIdInput<T>({
 
 	// Invoke onChange whenever the stored taxId changes.
 	useEffect(() => {
-		onChange(getFormattedTaxId(taxIdDigits));
+		onChange?.(getFormattedTaxId(taxIdDigits));
 	}, [getFormattedTaxId, onChange, taxIdDigits]);
 
 	// Verifies that the inputRef was correctly passed to the custom input component.
@@ -174,13 +159,7 @@ export function TaxIdInput<T>({
 	// On any event, we invoke this function to sync the internal state that we are recording for
 	// what the user has typed, as well as the current caret position in the input box.
 	const syncInput = useCallback(
-		(
-			event:
-				| Event
-				| ChangeEvent<HTMLInputElement>
-				| FormEvent<HTMLInputElement>
-				| KeyboardEvent
-		) => {
+		(event: SyncInputEvent) => {
 			const input = inputRef.current;
 			if (!input) {
 				return;
@@ -236,7 +215,7 @@ export function TaxIdInput<T>({
 
 	const CustomInput = customInput;
 
-	const inputProps: Omit<CustomInputPropsType, 'inputRef'> = useMemo(
+	const inputProps = useMemo(
 		() => ({
 			'data-testid': TAX_ID_INPUT_TEST_ID,
 			value: displayValue,
@@ -252,8 +231,8 @@ export function TaxIdInput<T>({
 	);
 
 	return CustomInput ? (
-		<CustomInput inputRef={inputRef} {...inputProps} {...customInputProps} />
+		<CustomInput inputRef={inputRef} {...inputProps} />
 	) : (
 		<input type="text" ref={inputRef} {...inputProps} />
 	);
-}
+};

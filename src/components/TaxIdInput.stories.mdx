@@ -1,0 +1,69 @@
+import { Canvas, Meta, Story } from '@storybook/addon-docs';
+
+import { TaxIdInput } from './TaxIdInput';
+import { TaxIdType } from 'types';
+
+<Meta
+	title="TaxIdInput"
+	component={TaxIdInput}
+	parameters={{
+		viewMode: 'docs',
+	}}
+/>
+
+## Basic SSN Input
+
+Basic example of an SSN input with no character hiding.
+
+<Canvas>
+	<Story name="Basic SSN Input">
+		<TaxIdInput taxIdType={TaxIdType.SSN} />
+	</Story>
+</Canvas>
+
+## Basic EIN Input
+
+Change the `taxIdType` property to change the formatting of the input.
+
+<Canvas>
+	<Story name="Basic EIN Input">
+		<TaxIdInput taxIdType={TaxIdType.EIN} />
+	</Story>
+</Canvas>
+
+## Character Hiding
+
+In order to hide inputted characters provide a value for the `hiddenCharacter` property. The value
+must be a single character and cannot be a hyphen (`-`) or any digit.
+
+<Canvas>
+	<Story name="Hidden Character">
+		<TaxIdInput hiddenCharacter="*" taxIdType={TaxIdType.SSN} />
+	</Story>
+</Canvas>
+
+By default, inputted characters are hidden with the `hiddenCharacter` after `500` milliseconds. You
+can specify a different timeout using the `hideLastCharacterDelay` property.
+
+<Canvas>
+	<Story name="Hidden Character Delay">
+		<TaxIdInput hiddenCharacter="*" hideLastCharacterDelay={1000} taxIdType={TaxIdType.SSN} />
+	</Story>
+</Canvas>
+
+## Revealing Hidden Input
+
+The prop `show` can be used to toggle the hidden characters from hiding/showing.
+
+<Canvas>
+	<Story name="Revealing Hidden Characters" args={{ show: false }}>
+		{({ show }) => (
+			<TaxIdInput
+				hiddenCharacter="*"
+				hideLastCharacterDelay={1000}
+				taxIdType={TaxIdType.SSN}
+				show={show}
+			/>
+		)}
+	</Story>
+</Canvas>
