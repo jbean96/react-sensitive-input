@@ -11,25 +11,9 @@ import React, {
 	MutableRefObject,
 } from 'react';
 import { TaxIdType } from 'types';
-import { cleanInput, formatEin, formatSsn } from 'utils';
+import { cleanInput, formatEin, formatSsn, isHiddenCharacterValid } from 'utils';
 import { useIsMounted } from 'utils/hooks';
 import keycode from 'keycode';
-
-// Determines if a provided hidden character is valid. A hidden charcter is valid if it is:
-//  1. A single character.
-//  2. Not a digit
-//  3. Not a hyphen (-)
-const isHiddenCharacterValid = (hiddenCharacter: string | undefined) => {
-	if (hiddenCharacter && hiddenCharacter.length > 1) {
-		return false;
-	}
-
-	if (!hiddenCharacter) {
-		return true;
-	}
-
-	return !/\d|-/.exec(hiddenCharacter);
-};
 
 export const TAX_ID_INPUT_TEST_ID = 'tii-1';
 

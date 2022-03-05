@@ -2,6 +2,7 @@ import { Canvas, Meta, Story } from '@storybook/addon-docs';
 
 import { TaxIdInput } from './TaxIdInput';
 import { TaxIdType } from 'types';
+import { isHiddenCharacterValid } from 'utils';
 
 <Meta
 	title="TaxIdInput"
@@ -37,8 +38,13 @@ In order to hide inputted characters provide a value for the `hiddenCharacter` p
 must be a single character and cannot be a hyphen (`-`) or any digit.
 
 <Canvas>
-	<Story name="Hidden Character">
-		<TaxIdInput hiddenCharacter="*" taxIdType={TaxIdType.SSN} />
+	<Story name="Hidden Character" args={{ hiddenCharacter: '*' }}>
+		{({ hiddenCharacter }) => (
+			<TaxIdInput
+				hiddenCharacter={isHiddenCharacterValid(hiddenCharacter) ? hiddenCharacter : '*'}
+				taxIdType={TaxIdType.SSN}
+			/>
+		)}
 	</Story>
 </Canvas>
 
@@ -63,6 +69,41 @@ The prop `show` can be used to toggle the hidden characters from hiding/showing.
 				hideLastCharacterDelay={1000}
 				taxIdType={TaxIdType.SSN}
 				show={show}
+			/>
+		)}
+	</Story>
+</Canvas>
+
+## Showing the X Last Digits
+
+Prop `showLastDigits` will show the provided number of digits from the end of the user's input
+regardless of the other props that have to do with hiding characters (i.e. `hideLastCharacterDelay`
+and `show`). However, these characters only show in the case that the user has typed
+`<# of characters in format> - showLastDigits`. Since this component currently only supports tax IDs
+which have a length of 9, show last digits will only show the last digits in the case that the user
+has provided at least `9 - showLastDigits` digits, in which case the last
+`<# of characters user has provided> - (9 - showLastDigits)` digits will be shown.
+
+For example, if we provide the value of `4` for `showLastDigits`, if the user types anything less
+than `9 - 4 = 5` digits we will display characters abiding by the rules of `hideLastCharacterDelay`
+and `show`. Once the user types an additional digits (for a total of 6 digits) we will show
+`6 - (9 - 4) = 1` digits. From there on out every additionally provided digit will reveal another
+inputted number.
+
+While this is difficult behavior to describe it is easy to see and experience.
+
+<Canvas>
+	<Story
+		name="Showing the X Last Digits"
+		args={{ showLastDigits: 4, hideLastCharacterDelay: 500, show: false }}
+	>
+		{({ show, showLastDigits, hideLastCharacterDelay }) => (
+			<TaxIdInput
+				hiddenCharacter="*"
+				hideLastCharacterDelay={hideLastCharacterDelay}
+				taxIdType={TaxIdType.SSN}
+				show={show}
+				showLastDigits={showLastDigits}
 			/>
 		)}
 	</Story>
