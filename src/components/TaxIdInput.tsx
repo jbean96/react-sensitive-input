@@ -13,6 +13,7 @@ import React, {
 import { TaxIdType } from 'types';
 import { cleanInput, formatEin, formatSsn } from 'utils';
 import { useIsMounted } from 'utils/hooks';
+import keycode from 'keycode';
 
 // Determines if a provided hidden character is valid. A hidden charcter is valid if it is:
 //  1. A single character.
@@ -91,7 +92,7 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
 	const inputRef = useRef<HTMLInputElement | null>(null);
 	const isMountedRef = useIsMounted();
 
-	const [hideLastCharacter, setHideLastCharacter] = useState(hideLastCharacterDelay === 0);
+	const [hideLastCharacter, setHideLastCharacter] = useState(hideLastCharacterDelay !== Infinity);
 	const hideLastCharacterTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
 	// Synchronizes our internal storage of the taxId whenever the prop changes
@@ -166,10 +167,11 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
 			}
 
 			const cleanedInput = cleanInput(input.value, characterRegex);
-			let currentTaxIdDigits = taxIdDigits;
+
+			const key = keycode(event as Event);
 
 			if (hideLastCharacterDelay !== 0 && hideLastCharacterDelay !== Infinity) {
-				if (cleanedInput.length > currentTaxIdDigits.length) {
+				if (cleanedInput.length > taxIdDigits.length) {
 					setHideLastCharacter(false);
 					if (hideLastCharacterTimeoutRef.current) {
 						clearTimeout(hideLastCharacterTimeoutRef.current);
@@ -179,25 +181,25 @@ export const TaxIdInput: VFC<TaxIdInputProps> = ({
 							setHideLastCharacter(true);
 						}
 					}, hideLastCharacterDelay);
-				} else if (
-					'key' in event &&
-					(event.key === 'Backspace' || event.key === 'Delete')
-				) {
+				} else if (key === 'backspace' || key === 'delete') {
 					setHideLastCharacter(true);
 				}
 			}
 
-			// Adds any new characters to our state if there are any new ones
-			for (let i = 0; i < cleanedInput.length; i++) {
-				if (/[0-9]/.exec(cleanedInput[i])) {
-					currentTaxIdDigits =
-						currentTaxIdDigits.substring(0, i) +
-						cleanedInput[i] +
-						currentTaxIdDigits.substring(i + 1);
-				}
+			let currentTaxIdDigits = taxIdDigits;
+			// Adds the newest character to our state if there is one
+			if (
+				cleanedInput.length > taxIdDigits.length &&
+				/[0-9]/.exec(cleanedInput[cleanedInput.length - 1])
+			) {
+				currentTaxIdDigits = `${currentTaxIdDigits}${
+					cleanedInput[cleanedInput.length - 1]
+				}`;
+			} else {
+				// Removes any deleted characters
+				currentTaxIdDigits = currentTaxIdDigits.substring(0, cleanedInput.length);
 			}
-			// Removes any deleted characters
-			currentTaxIdDigits = currentTaxIdDigits.substring(0, cleanedInput.length);
+
 			setTaxIdDigits(currentTaxIdDigits);
 
 			const formattedTaxId = getFormattedTaxId(currentTaxIdDigits);

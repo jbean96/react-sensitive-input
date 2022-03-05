@@ -93,10 +93,10 @@ describe('TaxIdInput - display, character hiding', () => {
 		).toThrowError();
 	});
 
-	it("doesn't hide last character on initial render", () => {
+	it('hides last character on initial render', () => {
 		render(<TaxIdInput {...defaultProps} hideLastCharacterDelay={500} value="123-45-6789" />);
 
-		expect(screen.getByTestId(TAX_ID_INPUT_TEST_ID)).toHaveDisplayValue('***-**-***9');
+		expect(screen.getByTestId(TAX_ID_INPUT_TEST_ID)).toHaveDisplayValue('***-**-****');
 	});
 
 	it('hides last character after character delay', () => {
