@@ -108,3 +108,27 @@ While this is difficult behavior to describe it is easy to see and experience.
 		)}
 	</Story>
 </Canvas>
+
+## Character Masking
+
+By providing a single character for `maskCharacter`, the character will be displayed in the vacant
+spots of the provided format.
+
+For example with a `maskCharacter` of `"X"`, if the user has not input any characters for an SSN the
+display will show "XXX-XX-XXXX"
+
+<Canvas>
+	<Story
+		name="Character Masking"
+		args={{ hiddenCharacter: '*', show: false, maskCharacter: 'X' }}
+	>
+		{({ hiddenCharacter, show, maskCharacter }) => (
+			<TaxIdInput
+				hiddenCharacter={hiddenCharacter}
+				maskCharacter={maskCharacter}
+				taxIdType={TaxIdType.SSN}
+				show={show}
+			/>
+		)}
+	</Story>
+</Canvas>

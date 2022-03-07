@@ -5,7 +5,7 @@ import { TaxIdType } from 'types';
 import userEvent from '@testing-library/user-event';
 import { TextField } from '@mui/material';
 
-test('TaxIdInput renders', () => {
+test('TaxIdInput - renders', () => {
 	render(
 		<TaxIdInput
 			onChange={() => {
